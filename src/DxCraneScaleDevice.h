@@ -34,17 +34,18 @@ public:
 
     void turnOn();
     void turnOff();
+    void tare();
     void unhold() const;
     bool isBacklightActive();
 
-    void sleepBacklight(bool recheck=false);
+    bool sleepBacklight(bool recheck=false, bool forceTurnOff=false);
 
 #if CRANESCALE_RESPECT_MEASUREMENT_MODE
     bool startMeasurement(bool waitForConnected = false);
     bool stopMeasurement();
 #endif
 
-    bool isDeviceFound() const {
+    [[nodiscard]] bool isDeviceFound() const {
         return (currentState_ >= DxCraneScaleDeviceState_Found);
     }
 

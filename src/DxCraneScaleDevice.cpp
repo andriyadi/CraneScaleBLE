@@ -15,7 +15,7 @@ DxCraneScaleDevice::DxCraneScaleDevice(uint8_t powerPin, uint8_t holdPin, uint8_
 DxCraneScaleDevice::~DxCraneScaleDevice() = default;
 
 static void activePinInterrupted(void *arg) {
-    isr_log_i("Crane scale is active!");
+    //isr_log_i("Crane scale is active!");
 }
 
 bool DxCraneScaleDevice::begin() {
@@ -24,13 +24,19 @@ bool DxCraneScaleDevice::begin() {
     digitalWrite(powerPin_, HIGH);
 
     delay(100);
+    // Change as input right away, to capture OFF
+    changePowerPinMode(INPUT_PULLUP);
+
+    delay(100);
 //    pinMode(holdPin_, OUTPUT);
 //    digitalWrite(holdPin_, HIGH);
-    pinMode(holdPin_, INPUT); // Change hold pin as input, so tare will work
+    pinMode(holdPin_, INPUT); // Change hold pin as input, so tare button will work
 
-//    if (activeInterruptPin_ != 255) {
-//        changeActivePinMode(INPUT_PULLDOWN);
-//    }
+    if (activeInterruptPin_ != 255) {
+        changeActivePinMode(INPUT_PULLDOWN);
+        //sleepBacklight(true);
+        log_i("Backlight active: %d", isBacklightActive());
+    }
 
     if (client_ == nullptr) {
         client_ = new DxCraneScaleBLEClient(clientId_);
@@ -41,7 +47,7 @@ bool DxCraneScaleDevice::begin() {
         client_->begin();
     }
 
-    // First assumed device is OFF
+    // First, assumed the device is OFF
     setCurrentState(DxCraneScaleDeviceState_Off);
     // Set to low number, since if device is already ON, should get response faster than that.
     noActivityTimeoutMS_ = 3000;
@@ -225,6 +231,13 @@ void DxCraneScaleDevice::turnOff() {
     changePowerPinMode(INPUT_PULLUP);
 }
 
+void DxCraneScaleDevice::tare() {
+    // Tare essentially is OFF and ON
+    turnOff();
+    delay(500);
+    turnOn();
+}
+
 #if CRANESCALE_RESPECT_MEASUREMENT_MODE
 bool CraneScaleDevice::startMeasurement(bool shouldWaitForConnected) {
 
@@ -339,37 +352,50 @@ bool DxCraneScaleDevice::isBacklightActive() {
     return (digitalRead(activeInterruptPin_) == HIGH);
 }
 
-void DxCraneScaleDevice::sleepBacklight(bool recheckBacklight) {
+bool DxCraneScaleDevice::sleepBacklight(bool recheckBacklight, bool forceTurnOff) {
     if (activeInterruptPin_ == 255) {
-        return;
+        return false;
     }
 
+    // Change mode to OUTPUT to try to turn screen off
     changeActivePinMode(OUTPUT, false);
     digitalWrite(activeInterruptPin_, LOW);
 
 //    delay(100);
 //    changeActivePinMode(INPUT_PULLDOWN);
 
+    // If recheck flag is true, keep checking backlight status until timeout
     if (recheckBacklight) {
-        pinMode(activeInterruptPin_, INPUT);
+        //pinMode(activeInterruptPin_, INPUT);
         unsigned long _start = millis();
         bool _timeout = false;
         while (isBacklightActive()) {
-            if (millis() - _start > 20000) {
+            if (millis() - _start > 30000) {
                 _timeout = true;
                 break;
             }
             Serial.print(".");
             delay(200);
-            sleepBacklight();
+            //sleepBacklight();
+
+            // Need to keep run to keep track the state
+            run();
         }
 
         Serial.print("\r\n");
-        if (_timeout) {
-            // Just turn off, later device will be turned on automatically when wake up
-            turnOff();
+        if (isBacklightActive() && _timeout) {
+            if (forceTurnOff) {
+                // Just turn off, if requred. Later, device will be turned on automatically when wake up
+                turnOff();
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
+
+    return !isBacklightActive();
 }
 
 void DxCraneScaleDevice::changeActivePinMode(uint8_t mode, bool detachInt) {
@@ -388,6 +414,8 @@ void DxCraneScaleDevice::changeActivePinMode(uint8_t mode, bool detachInt) {
         pinMode(activeInterruptPin_, mode);
     }
 }
+
+
 
 
 

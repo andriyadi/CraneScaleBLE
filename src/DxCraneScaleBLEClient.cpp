@@ -14,33 +14,8 @@ DxCraneScaleBLEIdentifier::DxCraneScaleBLEIdentifier(const std::string &fallback
     }
 }
 
-
-/* // If not using NimBLE
-void CraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice device) {
-    if (client == nullptr) {
-        return;
-    }
-
-    if (!device.getAddress().equals(*client->getAddress())) {
-        //log_e("Address not match -> %s", device.getAddress().toString().c_str());
-        //client->setCurrentState(CraneScaleBLEClientState_Scanning);
-        return;
-    }
-
-    if (!device.haveManufacturerData()) {
-        log_e("Not receiving necessary data");
-        return;
-    }
-
-    if (client->currentState_ == CraneScaleBLEClientState_Scanning) {
-        client->setCurrentState(CraneScaleBLEClientState_Found);
-    }
-
-    client->processData(device.getManufacturerData());
-}
-*/
-
 // If using NimBLE
+#ifdef MAIN_NIMBLEDEVICE_H_
 void DxCraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice *device) {
     if (client == nullptr) {
         return;
@@ -63,7 +38,30 @@ void DxCraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice *dev
 
     client->processData(device->getManufacturerData());
 }
+#else // If not using NimBLE
+void CraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice device) {
+    if (client == nullptr) {
+        return;
+    }
 
+    if (!device.getAddress().equals(*client->getAddress())) {
+        //log_e("Address not match -> %s", device.getAddress().toString().c_str());
+        //client->setCurrentState(CraneScaleBLEClientState_Scanning);
+        return;
+    }
+
+    if (!device.haveManufacturerData()) {
+        log_e("Not receiving necessary data");
+        return;
+    }
+
+    if (client->currentState_ == CraneScaleBLEClientState_Scanning) {
+        client->setCurrentState(CraneScaleBLEClientState_Found);
+    }
+
+    client->processData(device.getManufacturerData());
+}
+#endif
 
 
 DxCraneScaleBLEClient::DxCraneScaleBLEClient(DxCraneScaleBLEIdentifier &id): identifiers_(id) {
