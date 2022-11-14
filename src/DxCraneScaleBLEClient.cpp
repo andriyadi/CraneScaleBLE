@@ -80,8 +80,11 @@ bool DxCraneScaleBLEClient::begin() {
 #endif
 
     BLEDevice::init("");
+
     // Lower the scan power as the device should be near
-    BLEDevice::setPower(ESP_PWR_LVL_N3, ESP_BLE_PWR_TYPE_SCAN);
+    //BLEDevice::setPower(ESP_PWR_LVL_N3, ESP_BLE_PWR_TYPE_SCAN);
+
+    BLEDevice::setPower(ESP_PWR_LVL_P3, ESP_BLE_PWR_TYPE_SCAN);
 
     log_d(" - Device initialized");
 
@@ -242,15 +245,14 @@ bool DxCraneScaleBLEClient::processData(const std::basic_string<char>& strManufa
 }
 
 float DxCraneScaleBLEClient::convertManufacturerDataToWeight(const std::string &manufacturerDataStr) {
-    if (manufacturerDataStr.length() < 19)
-    {
+    if (manufacturerDataStr.length() < 19) {
         return NAN;
     }
 
     auto manufacturerDataBuf = manufacturerDataStr.data();
     uint16_t raw = manufacturerDataBuf[12] << 8 | manufacturerDataBuf[13];
 
-    return static_cast<float>(raw) / 100.0f;
+    return ((float)raw / 100.0f);
 }
 
 DxCraneScaleBLEClientHoldStatus_e DxCraneScaleBLEClient::readHoldStatus(const std::string &manufacturerDataStr) {
@@ -262,7 +264,7 @@ DxCraneScaleBLEClientHoldStatus_e DxCraneScaleBLEClient::readHoldStatus(const st
     if ((uint8_t)status == 1) {
         return DxCraneScaleBLEClientHoldStatus_Measuring;
     }
-    else if ((uint8_t)status == 161) {
+    else if ((uint8_t)status == 0xA1) {
         return DxCraneScaleBLEClientHoldStatus_Hold;
     }
     else {
