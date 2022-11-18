@@ -32,7 +32,7 @@ void DxCraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice *dev
 
     log_d("RSSI: %d", rssi);
 
-    if (rssi < client->minAcceptedRSSI_)
+    if (rssi < client->minAcceptedRSSI_ && client->minAcceptedRSSI_ < 0)
     {
         return;
     }
