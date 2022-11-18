@@ -27,6 +27,16 @@ void DxCraneScaleBLEAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice *dev
         return;
     }
 
+    int rssi = device->getRSSI();
+    client->lastRSSI_ = rssi;
+
+    log_d("RSSI: %d", rssi);
+
+    if (rssi < client->minAcceptedRSSI_)
+    {
+        return;
+    }
+
     if (!device->haveManufacturerData()) {
         log_e("Not receiving necessary data");
         return;

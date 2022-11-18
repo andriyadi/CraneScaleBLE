@@ -70,6 +70,18 @@ public:
         eventCallback_ = std::move(cb);
     }
 
+    int lastRSSI() {
+        return lastRSSI_;
+    }
+
+    int minAcceptedRSSI() {
+        return minAcceptedRSSI_;
+    }
+
+    void setMinAcceptedRSSI(int rssi) {
+        minAcceptedRSSI_ = rssi;
+    }
+
 protected:
     DxCraneScaleBLEIdentifier &identifiers_;
 
@@ -86,6 +98,9 @@ protected:
     bool processData(const std::basic_string<char>& data);
     float convertManufacturerDataToWeight(const std::string &manufacturerDataStr);
     DxCraneScaleBLEClientHoldStatus_e readHoldStatus(const std::string &manufacturerDataStr);
+
+    int lastRSSI_;
+    int minAcceptedRSSI_ = -70;
 
     friend class DxCraneScaleBLEAdvertisedDeviceCallbacks;
 };
