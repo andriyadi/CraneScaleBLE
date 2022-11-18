@@ -53,6 +53,10 @@ public:
         return client_->getLastValues();
     }
 
+    DxCraneScaleBLEClient* getClient() {
+        return client_;
+    }
+
     uint8_t powerPinValueIfAsInput = HIGH;
     void setPowerButtonClicked();
 

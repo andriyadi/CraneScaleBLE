@@ -50,7 +50,7 @@ bool DxCraneScaleDevice::begin() {
     // First, assumed the device is OFF
     setCurrentState(DxCraneScaleDeviceState_Off);
     // Set to low number, since if device is already ON, should get response faster than that.
-    noActivityTimeoutMS_ = 3000;
+    noActivityTimeoutMS_ = 8000;
 
     return false;
 }
@@ -78,7 +78,7 @@ bool DxCraneScaleDevice::run() {
             setCurrentState(DxCraneScaleDeviceState_Off);
             // Set to low number, since if device is already ON, should get response faster than that.
             // So 1000 ms from now, device will be turned on by code
-            noActivityTimeoutMS_ = 1000;
+            noActivityTimeoutMS_ = 5000;
         }
         // Else it's OFF -> Will be turned ON below
     }
@@ -136,7 +136,9 @@ void DxCraneScaleDevice::checkActivityToMarkOff() {
         (millis() - timeTracker_.lastDeviceActivity) > noActivityTimeoutMS_) {
         // So mark it OFF --> Will be turned ON later
         setCurrentState(DxCraneScaleDeviceState_Off);
-        noActivityTimeoutMS_ = 1000;
+        noActivityTimeoutMS_ = 5000;
+
+        log_i("MARKED AS OFF");
     }
 }
 
@@ -205,7 +207,7 @@ void DxCraneScaleDevice::turnOn() {
     setCurrentState(DxCraneScaleDeviceState_On);
 
     // Wait longest, as need time for device is really turned on and start broadcasting
-    noActivityTimeoutMS_ = 9*1000;
+    noActivityTimeoutMS_ = 15*1000;
 
     // Change power pin mode as input right away
     changePowerPinMode(INPUT_PULLUP);
@@ -216,7 +218,7 @@ void DxCraneScaleDevice::turnOn() {
 
 void DxCraneScaleDevice::turnOff() {
     if (powerPin_ == 255) { return;}
-    //if (currentState_ == CraneScaleDeviceState_Off) { return; }
+    if (currentState_ == DxCraneScaleDeviceState_Off) { return; }
 
     changePowerPinMode(OUTPUT);
 
